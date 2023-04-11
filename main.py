@@ -69,7 +69,7 @@ def engkor(text):
     return join_jamos(result)
 
 
-openai.api_key = "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"
+openai.api_key = "Your Api key"
 
 messages = []
 from pynput import keyboard
