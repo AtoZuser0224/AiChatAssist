@@ -69,12 +69,12 @@ def engkor(text):
     return join_jamos(result)
 
 
-openai.api_key = "Your Api key"
+openai.api_key = "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"
 
 messages = []
 from pynput import keyboard
 import pyautogui
-lanaguage = input("언어를 설정")
+lanaguage = input("언어를 설정 : ")
 trigger = 0
 prom = ""
 kor = ""
@@ -112,7 +112,8 @@ def on_key_press(key):
                 pyperclip.copy(assistant_content)
                 pyautogui.hotkey('ctrl', 'v')
                 trigger = 0
-        elif key.char.isalpha() and trigger == 2:
+                prom = ""
+        elif trigger == 2:
             # 키 값을 한글로 변환
 
             prom = prom + key.char
