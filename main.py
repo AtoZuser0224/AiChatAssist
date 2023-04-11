@@ -69,7 +69,7 @@ def engkor(text):
     return join_jamos(result)
 
 
-openai.api_key = "Your Api key"
+openai.api_key = "Your Api Key"
 
 messages = []
 from pynput import keyboard
@@ -113,7 +113,7 @@ def on_key_press(key):
                 pyautogui.hotkey('ctrl', 'v')
                 trigger = 0
                 prom = ""
-        elif trigger == 2:
+        elif trigger == 2 and key.char is not None:
             # 키 값을 한글로 변환
 
             prom = prom + key.char
