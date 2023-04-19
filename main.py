@@ -1,79 +1,25 @@
+import time
+
 import openai
 from hangul_utils import join_jamos
 import pyperclip
-
-cons = {'r': 'ㄱ', 'R': 'ㄲ', 's': 'ㄴ', 'e': 'ㄷ', 'E': 'ㄸ', 'f': 'ㄹ', 'a': 'ㅁ', 'q': 'ㅂ', 'Q': 'ㅃ', 't': 'ㅅ', 'T': 'ㅆ',
-        'd': 'ㅇ', 'w': 'ㅈ', 'W': 'ㅉ', 'c': 'ㅊ', 'z': 'ㅋ', 'x': 'ㅌ', 'v': 'ㅍ', 'g': 'ㅎ'}
-# 모음-중성
-vowels = {'k': 'ㅏ', 'o': 'ㅐ', 'i': 'ㅑ', 'O': 'ㅒ', 'j': 'ㅓ', 'p': 'ㅔ', 'u': 'ㅕ', 'P': 'ㅖ', 'h': 'ㅗ', 'hk': 'ㅘ',
-          'ho': 'ㅙ', 'hl': 'ㅚ',
-          'y': 'ㅛ', 'n': 'ㅜ', 'nj': 'ㅝ', 'np': 'ㅞ', 'nl': 'ㅟ', 'b': 'ㅠ', 'm': 'ㅡ', 'ml': 'ㅢ', 'l': 'ㅣ'}
-
-# 자음-종성
-cons_double = {'rt': 'ㄳ', 'sw': 'ㄵ', 'sg': 'ㄶ', 'fr': 'ㄺ', 'fa': 'ㄻ', 'fq': 'ㄼ', 'ft': 'ㄽ', 'fx': 'ㄾ', 'fv': 'ㄿ',
-               'fg': 'ㅀ', 'qt': 'ㅄ'}
+import clipboard
 
 
-def engkor(text):
-    result = ''  # 영 > 한 변환 결과
+def text_macro(input_text):
+    # 공백문자를 다른 문자로 변환
+    replaced_text = input_text.replace(" ", 'ㅁ')
 
-    # 1. 해당 글자가 자음인지 모음인지 확인
-    vc = ''
-    for t in text:
-        if t in cons:
-            vc += 'c'
-        elif t in vowels:
-            vc += 'v'
-        else:
-            vc += '!'
-
-    # cvv → fVV / cv → fv / cc → dd
-    vc = vc.replace('cvv', 'fVV').replace('cv', 'fv').replace('cc', 'dd')
-
-    # 2. 자음 / 모음 / 두글자 자음 에서 검색
-    i = 0
-    while i < len(text):
-        v = vc[i]
-        t = text[i]
-
-        j = 1
-        # 한글일 경우
-        try:
-            if v == 'f' or v == 'c':  # 초성(f) & 자음(c) = 자음
-                result += cons[t]
-
-            elif v == 'V':  # 더블 모음
-                result += vowels[text[i:i + 2]]
-                j += 1
-
-            elif v == 'v':  # 모음
-                result += vowels[t]
-
-            elif v == 'd':  # 더블 자음
-                result += cons_double[text[i:i + 2]]
-                j += 1
-            else:
-                result += t
-
-        # 한글이 아닐 경우
-        except:
-            if v in cons:
-                result += cons[t]
-            elif v in vowels:
-                result += vowels[t]
-            else:
-                result += t
-
-        i += j
-
-    return join_jamos(result)
+    # 변환된 문자열 출력
+    return replaced_text
 
 
-openai.api_key = "Your Api Key"
+openai.api_key = "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"
 
 messages = []
 from pynput import keyboard
 import pyautogui
+
 lanaguage = input("언어를 설정 : ")
 trigger = 0
 prom = ""
@@ -99,9 +45,13 @@ def on_key_press(key):
                 trigger = 3
             elif trigger == 3:
                 print("trigger = start2")
-                pyautogui.press('enter')
+                pyautogui.hotkey('ctrl', 'x')
+
+                kor = clipboard.paste()
+                print(kor)
+
                 pyperclip.copy(kor)
-                user_content = kor + ("를 "+lanaguage+" 언어로")
+                user_content = kor + ("를 " + lanaguage + " 언어로 만들어줘 그대신 사용하는 방법같은건 하나도 말하지마")
                 messages.append({"role": "user", "content": f"{user_content}"})
 
                 completion = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages)
@@ -109,16 +59,24 @@ def on_key_press(key):
                 assistant_content = completion.choices[0].message["content"].strip()
 
                 messages.append({"role": "assistant", "content": f"{assistant_content}"})
-                pyperclip.copy(assistant_content)
-                pyautogui.hotkey('ctrl', 'v')
+                lines = text_macro(assistant_content).splitlines()
+
+                # 리스트에 저장된 각 줄의 문자열 출력
+                for line in lines:
+                    for i in range(len(line)):
+                        if "ㅁ" == line[i]:
+                            pyautogui.press('space')
+                        else:
+                            pyperclip.copy(line[i])
+                            pyautogui.hotkey('ctrl', 'v')
+
+
+                        print(line)
+                    pyautogui.press('enter')
+                    pyautogui.press('home')
+
                 trigger = 0
                 prom = ""
-        elif trigger == 2 and key.char is not None:
-            # 키 값을 한글로 변환
-
-            prom = prom + key.char
-            kor = engkor(prom)
-            print(kor)
 
     except AttributeError:
         pass
